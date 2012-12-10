@@ -1,4 +1,4 @@
-/* distincly.js: MongoDB distinct value counting
+/* distinctly.js: MongoDB distinct value counting
 
 This script is a convenience for counting the distinct values in a MongoDB document field.
 This is safe to run on any database as it does not modify data.
@@ -12,6 +12,7 @@ Usage: $ mongo database --eval="collection='mycollection'; field='foo.bar'; limi
 if (typeof collection === "undefined") throw "You must include a collection name";
 if (typeof field === "undefined") throw "You must specify a field name to count distinctly";
 if (typeof limit === "undefined") var limit = -1;
+if (typeof filter === "undefined") var filter = {};
 
 var total = db[collection].count();
 print("Counting distinct values on "+db+"."+collection+"/"+field+" using in-memory counts across "+total+" documents");
@@ -19,7 +20,7 @@ var counts = {};
 // TODO consider filtering to those documents that have a value for the field
 var only = {_id: 0}
 only[field] = 1;
-var cursor = db[collection].find({}, only);
+var cursor = db[collection].find(filter, only);
 
 if (limit > 0) {
   print("Limiting results to the first "+limit+" documents");
@@ -59,5 +60,10 @@ function pad(s, n) {
 }
 
 print("\nDistinct values and counts on "+db+"."+collection+"/"+field);
-for(var i=0; i<values.length; i++)
+var countTotal = 0;
+for(var i=0; i<values.length; i++) {
   print(""+pad(values[i], maxLength)+"\t"+counts[values[i]]);
+  countTotal += counts[values[i]];
+}
+print(pad("\nTotal", maxLength), countTotal);
+print(""+values.length+" distinct values found");
